@@ -23,14 +23,35 @@ from module_downloadwithfirefox import DownloadWithFirefox
 #from module_runprogram import RunProgram
 
 
-def breakonerror(message):
-    print(message)
-    exit(1)
+class Player(object):
+
+    def __init__(self, modules):
+        self.modules = modules
 
 
-def executetasks(modules, play):
-    tasklist = play['tasks']
-    for task in tasklist:
+    def execute(self, play):
+        print(f"-> {play['name'] if play['name'] else '<anonymous>'} ({len(play['tasks'])} tasks):")
+        variables = self.parsevariables(play)
+        self.runtasks(play, variables)
+
+    
+    def parsevariables(self, play):
+        variables = {}
+        for key in play.get('vars', {}):
+            variables[key] = play['vars'][key]
+        return variables
+
+
+    def runtasks(self, play, variables):
+        for task in play.get('tasks', []):
+            self.runtask(self.preparetask(task, variables))
+
+
+    def preparetask(self, task, variables):
+        return self.replaceindictionary(task, variables)
+
+    
+    def runtask(self, task):
         result = None
         print(f"---> {task['name'] if task['name'] else '<anonymous>'}:")
 
@@ -43,14 +64,41 @@ def executetasks(modules, play):
                         result = module.execute(parameters)
                     except Exception as exception:
                         breakonerror(f"     Error: {exception.message}.")
-    
             if result is None:
-                print(f"     Error: No module found for {task['name']}.")
-#                breakonerror(f"     No module found for {task['name']}.")
+                breakonerror(f"     No module found for {task['name']}.")
     
             print(f"     Status: {result.status.name if result is not None else 'Unknown'}\n")
         else:
-            print("     Status: Skipped\n")
+            print(f"     Status: Skipped\n")
+
+
+    def replaceindictionary(self, originalvalue, variables):
+        newvalue = {}
+        for key in originalvalue:
+            originalelement = originalvalue[key]
+            if isinstance(originalelement, dict):
+                newelement = self.replaceindictionary(originalelement, variables)
+            elif isinstance(originalelement, str) and "{{" in originalelement:
+                newelement = self.replaceinstring(originalelement, variables)
+            else:
+                newelement = originalelement
+            newvalue[key] = newelement
+        return newvalue
+
+
+    def replaceinstring(self, originalvalue, variables):
+        startindex = originalvalue.find("{{") + 2
+        endindex = originalvalue.find("}}", startindex)
+        variable = originalvalue[startindex:endindex].strip()
+        value = variables[variable]
+        newvalue = originalvalue[:startindex - 2] + value + originalvalue[endindex + 2:]
+        return newvalue
+
+
+
+def breakonerror(message):
+    print(message)
+    exit(1)
 
 
 def parsecommandline(arguments):
@@ -81,9 +129,9 @@ def readplaybook(playbookfile):
             return None
 
 def executeplaybook(modules, playbook):
+    player = Player(modules)
     for play in playbook:
-        print(f"-> {play['name'] if play['name'] else '<anonymous>'} ({len(play['tasks'])} tasks):")
-        executetasks(modules, play)
+        player.execute(play)
 
 
 # Start script and load modules
