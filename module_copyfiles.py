@@ -95,7 +95,7 @@ class CopyFiles(Module):
         status = Status.OK
 
         if not exists(sourcepath) or not isfile(sourcepath):
-            return self.handleerror(Error.MissingDirectory, f"Failed to copy the file {sourcepath}, it does not exist.")
+            return self.handleerror(Error.MissingDirectory, f"Failed to copy the file {sourcepath}, the file does not exist.")
 
         if not exists(targetdirectory):
             createdirectory(directory)
@@ -111,7 +111,7 @@ class CopyFiles(Module):
             copy(sourcepath, targetpath)
             status = Status.Changed
 
-        if not exists(filename) or not isfile(filename):
+        if not exists(targetpath) or not isfile(targetpath):
             return self.handleerror(Error.FailedCopyFile, f"Failed to copy the file {sourcepath} to {targetdirectory}.")
         else:
             return self.buildresult(status)
