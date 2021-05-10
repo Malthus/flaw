@@ -10,14 +10,16 @@ def donothing(parameters):
 
 class Parameter(object):
 
-    def __init__(self, key, required = True):
+    def __init__(self, key, required = True, masked = False):
         self.key = key
         self.required = required
+        self.masked = masked
 
 
 class Status(IntEnum):
     OK = 0,
     Changed = 1,
+    Skipped = 8,
     Error = 9
 
 
@@ -25,6 +27,7 @@ class Error(IntEnum):
     OK = 0,
     MissingArgument = 1,
     BadArgument = 2,
+    FailedCondition = 3,
     NotImplemented = 9,
     MissingDirectory = 20,
     MissingFile = 21,
@@ -74,7 +77,7 @@ class Module(object):
         arguments = self.parsearguments(arguments)
 
         if result is None:
-            self.printparameters(arguments)
+#            self.printparameters(arguments)
             return self.function(arguments)
         else:
             return result
@@ -104,8 +107,8 @@ class Module(object):
         return Result(status.Error, returncode, self.starttime, datetime.now(), message, payload)
 
 
-    def buildresult(self, status, returncode = 0, message = None, payload = {}):
-        return Result(status, returncode, self.starttime, datetime.now(), message, payload)
+    def buildresult(self, status, returncode = 0, cmd = None, message = None, payload = {}):
+        return Result(status, returncode, self.starttime, datetime.now(), cmd, message, payload)
 
 
     def printparameters(self, arguments):

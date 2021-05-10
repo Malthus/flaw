@@ -5,6 +5,7 @@ import sys
 
 from threading import Thread
 from yaml import safe_load, YAMLError 
+from datetime import datetime
 
 from flaw_library import checkadministratorrole
 from module import Status, Result
@@ -17,6 +18,9 @@ from module_createshortcut import CreateShortcut
 from module_addtopath import AddToPath
 from module_downloadfromurl import DownloadFromUrl
 from module_downloadwithfirefox import DownloadWithFirefox
+from module_checkrunasadmin import CheckRunAsAdmin
+from module_keyboardinput import KeyboardInput
+from module_showinformation import ShowInformation
 
 #from module_installmsi import InstallMSI
 #from module_deletefile import DeleteFile
@@ -43,33 +47,47 @@ class Player(object):
 
 
     def runtasks(self, play, variables):
-        for task in play.get('tasks', []):
-            self.runtask(self.preparetask(task, variables))
+        for taskmodel in play.get('tasks', []):
+            task = self.preparetask(taskmodel, variables)
+            result = self.runtask(task, variables)
+            variables = self.mergetask(result, variables)
 
 
-    def preparetask(self, task, variables):
-        return self.replaceindictionary(task, variables)
+    def preparetask(self, taskmodel, variables):
+        task = self.replaceindictionary(taskmodel, variables)
+        print(f"---> {task['name'] if task['name'] else '<anonymous>'}:")
+        return task
 
     
-    def runtask(self, task):
+    def runtask(self, task, variables):
         result = None
-        print(f"---> {task['name'] if task['name'] else '<anonymous>'}:")
 
         if task.get('when', True):
-            for modulekey in modules:
-                if modulekey in task:
-                    try:
-                        parameters = task[modulekey]
-                        module = modules[modulekey]
-                        result = module.execute(parameters)
-                    except Exception as exception:
-                        breakonerror(f"     Error: {exception.message}.")
-            if result is None:
+            modulekey = self.findmodule(modules, task)
+            if modulekey is not None:
+                try:
+                    parameters = task[modulekey]
+                    module = modules[modulekey]
+                    result = module.execute(parameters)
+                except Exception as exception:
+                    breakonerror(f"     Error: {exception.message}.")
+            else:
                 breakonerror(f"     No module found for {task['name']}.")
-    
-            print(f"     Status: {result.status.name if result is not None else 'Unknown'}\n")
         else:
-            print(f"     Status: Skipped\n")
+            result = Result(Status.Skipped, 0, datetime.now(), datetime.now())
+
+        return result
+
+
+    def mergetask(self, result, variables):
+        payload = result.payload
+        
+        newvariables = payload.get('variables', {})
+        for key in newvariables:
+            variables[key] = newvariables[key]
+
+        print(f"     Status: {result.status.name if result is not None else 'Unknown'}\n")
+        return variables
 
 
     def replaceindictionary(self, originalvalue, variables):
@@ -90,10 +108,17 @@ class Player(object):
         startindex = originalvalue.find("{{") + 2
         endindex = originalvalue.find("}}", startindex)
         variable = originalvalue[startindex:endindex].strip()
-        value = variables[variable]
+        value = variables if variable == '*' else variables[variable]
         newvalue = originalvalue[:startindex - 2] + value + originalvalue[endindex + 2:]
         return newvalue
 
+
+    def findmodule(self, modules, task):
+        for key in modules:
+            if key in task:
+                return key
+    
+        return None
 
 
 def breakonerror(message):
@@ -115,7 +140,10 @@ def loadmodules():
         'shortcut': CreateShortcut(),
         'addpath': AddToPath(),
         'download': DownloadFromUrl(),
-        'firefox': DownloadWithFirefox()
+        'firefox': DownloadWithFirefox(),
+        'checkadmin': CheckRunAsAdmin(),
+        'input': KeyboardInput(),
+        'info': ShowInformation()
 #        'install': InstallMSI(),
 #        'program': RunProgram(),
         } 

@@ -18,7 +18,6 @@ def checkadministratorrole():
         pass
     return adminrole
 
-
 def createdirectory(directory):
     pathlib.Path(directory).mkdir(parents = True, exist_ok = True)
 
