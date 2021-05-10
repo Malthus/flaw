@@ -4,7 +4,7 @@ from enum import IntEnum
 from collections import Mapping
 
 
-def donothingformodule(parameters):
+def donothing(parameters):
     return None
 
 
@@ -57,7 +57,7 @@ class Result(object):
 
 class Module(object):
 
-    def __init__(self, name, key, function = donothingformodule, parameters = []):
+    def __init__(self, name, key, function = donothing, parameters = []):
         self.name = name
         self.key = key
         self.function = function

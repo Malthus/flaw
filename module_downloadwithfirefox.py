@@ -2,6 +2,7 @@
 from os import system
 from os.path import exists, isdir, join
 from subprocess import run
+from time import sleep
 from configparser import ConfigParser
 
 from flaw_library import createdirectory
@@ -77,12 +78,12 @@ class DownloadWithFirefox(Module):
 
 
     def downloadfile(self, firefoxexecutable, url, timeout, killbrowser):
-        try:
-            result = run([firefoxexecutable, "-P", "flaw", url], shell = False, capture_output = False, text = False, timeout = timeout)
-            # Run with -silent flag?
-        except TimeoutExpired:
-            if killbrowser:
-                system("taskkill /im firefox.exe /f")
+        result = run([firefoxexecutable, "-P", "flaw", url], shell = False, capture_output = False, text = False)
+        # Run with -silent flag?
+        sleep(timeout)
+
+        if killbrowser:
+            system("taskkill /im firefox.exe /f")
     
         if result.returncode != 0:
             return self.handleerror(result.returncode, f"The command exited with return code {result.returncode}.")

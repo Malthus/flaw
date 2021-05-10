@@ -12,7 +12,7 @@ class DeleteFiles(Module):
     def __init__(self):
         super().__init__(
             name = "Delete one or more files", 
-            key = "deletefiles",
+            key = "deletefile",
             function = self.deletefiles,
             parameters = [
                 Parameter('dir', required = True),

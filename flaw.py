@@ -133,19 +133,21 @@ def parsecommandline(arguments):
 def loadmodules():
     return {
         'command': ExecuteCommand(),
-        'copyfiles': CopyFiles(),
-        'deletefiles': DeleteFiles(),
+        'copyfile': CopyFiles(),
+        'deletefile': DeleteFiles(),
         'replaceline': ReplaceLineInFile(),
         'mkdir': MakeDirectory(),
         'shortcut': CreateShortcut(),
         'pathenv': AddToPath(),
         'download': DownloadFromUrl(),
         'firefox': DownloadWithFirefox(),
-        'checkadmin': CheckRunAsAdmin(),
-        'input': KeyboardInput(),
-        'info': ShowInformation()
 #        'install': InstallMSI(),
 #        'program': RunProgram(),
+
+        'checkadmin': CheckRunAsAdmin(),
+
+        'input': KeyboardInput(),
+        'info': ShowInformation()
         } 
 
 def readplaybook(playbookfile):

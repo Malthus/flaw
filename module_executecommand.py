@@ -22,18 +22,18 @@ class ExecuteCommand(Module):
             ])
 
 
-    def executecommand(self, parameters):
-        shellcommand = parameters.get("shell", False)
-        silentoperation = parameters.get("silent", False)
-        directory = parameters.get('chdir', None)
+    def executecommand(self, arguments):
+        shellcommand = arguments.get("shell", False)
+        silentoperation = arguments.get("silent", False)
+        directory = arguments.get('chdir', None)
 
         if directory is not None:
             if exists(directory) and isdir(directory):
                 chdir(directory)
             else:
-                return self.handleerror(24, f"Failed to run the command in the directory {directory} because the directory does not exists.")
+                return self.handleerror(Error.MissingDirectory, f"Failed to run the command in the directory {directory} because the directory does not exists.")
 
-        result = run(split(parameters['command']), shell = shellcommand, capture_output = True, text = True)
+        result = run(split(arguments['command']), shell = shellcommand, capture_output = True, text = True)
 
         if not silentoperation:
             self.printdivider()

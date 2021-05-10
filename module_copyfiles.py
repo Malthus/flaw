@@ -13,7 +13,7 @@ class CopyFiles(Module):
     def __init__(self):
         super().__init__(
             name = "Copy one or more files", 
-            key = "copyfiles",
+            key = "copyfile",
             function = self.copyfiles,
             parameters = [
                 Parameter('sourcedir', required = True),

@@ -114,7 +114,7 @@ class AddToPath(Module):
         return root, subkey
 
 
-    def convertdirectory(self, directory)
+    def convertdirectory(self, directory):
         return directory.replace("/", "\\")
 
 
