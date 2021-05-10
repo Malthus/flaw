@@ -4,8 +4,8 @@ from enum import IntEnum
 from collections import Mapping
 
 
-def donothing(parameters):
-    return STATUS_OK
+def donothingformodule(parameters):
+    return None
 
 
 class Parameter(object):
@@ -33,6 +33,7 @@ class Error(IntEnum):
     MissingFile = 21,
     MissingExecutable = 22,
     MissingProfileDirectory = 24,
+    NoValidDirectory = 25,
     DuplicateDirectory = 31,
     DuplicateFile = 32,
     FailedCopyFile = 71,
@@ -56,7 +57,7 @@ class Result(object):
 
 class Module(object):
 
-    def __init__(self, name, key, function = donothing, parameters = []):
+    def __init__(self, name, key, function = donothingformodule, parameters = []):
         self.name = name
         self.key = key
         self.function = function
@@ -104,7 +105,7 @@ class Module(object):
 
     def handleerror(self, returncode, message, payload = {}):
         self.printmessage(message)
-        return Result(status.Error, returncode, self.starttime, datetime.now(), message, payload)
+        return Result(Status.Error, returncode, self.starttime, datetime.now(), message, payload)
 
 
     def buildresult(self, status, returncode = 0, cmd = None, message = None, payload = {}):

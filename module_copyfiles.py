@@ -1,6 +1,6 @@
 
 from os import remove, scandir
-from os.path import exists, isfile, join
+from os.path import exists, isdir, isfile, join
 from shutil import copy
 from glob import glob
 
@@ -90,7 +90,7 @@ class CopyFiles(Module):
 
 
     def copysingle(self, sourcedirectory, targetdirectory, filename, newfilename, overwrite):
-        sourcefilename = join(sourcedirectory, filename)
+        sourcepath = join(sourcedirectory, filename)
         targetpath = join(targetdirectory, newfilename)
         status = Status.OK
 

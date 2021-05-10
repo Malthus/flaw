@@ -15,45 +15,49 @@ class AddToPath(Module):
 
     def __init__(self):
         super().__init__(
-            name = "Add directory to the PATH environment", 
-            key = "path",
+            name = "Add directory to PATH environment", 
+            key = "pathenv",
             function = self.addtopath,
             parameters = [
                 Parameter('dir', required = True),
+                Parameter('regkey', required = False),
                 Parameter('forallusers', required = False),
-                Parameter('appendtopath', required = False)
+                Parameter('mode', required = False)
             ])
 
 
     def addtopath(self, arguments):
-        directory = arguments['dir']
+        directory = self.convertdirectory(arguments['dir'])
+        regkey = arguments.get('regkey', self.PATHKEY)
         forallusers = arguments.get('forallusers', False)
-        appendtopath = arguments.get('appendtopath', False)
+        mode = arguments.get('mode', 'prepend')
         status = Status.OK
     
         if not exists(directory):
-            return self.handleerror(22, f"The directory {directory} does not exist so it will not be added to the PATH.")
+            return self.handleerror(Error.MissingDirectory, f"The directory {directory} does not exist so it will not be added to the PATH.")
         elif not isdir(directory):
-            return self.handleerror(23, f"The directory {directory} is not a valid directory so it will not be added to the PATH.")
+            return self.handleerror(Error.NoValidDirectory, f"The directory {directory} is not a valid directory so it will not be added to the PATH.")
     
-        originalpath = self.getenvironment(name)
-        if append:
-            # self.apppendtopath(PATHKEY, directory)
-            self.tell('self.apppendtopath(PATHKEY, directory)')
+        originalpath = self.getenvironment(regkey)
+        if mode.lower() == "prepend":
+            print('self.prependtopath(PATHKEY, directory)')
+            self.prependtopath(self.PATHKEY, directory)
+        elif mode.lower() == "append":
+            print('self.apppendtopath(PATHKEY, directory)')
+            self.apppendtopath(self.PATHKEY, directory)
         else:
-            # self.prependtopath(PATHKEY, directory)
-            self.tell('self.prependtopath(PATHKEY, directory)')
+            return self.handleerror(Error.BadArgument, f"The mode '{mode}' it not recognized as a valid mode for this command, it should be 'append' or 'prepend'.")
 
-        newpath =  self.getenvironment(name)
+        newpath = self.getenvironment(regkey)
         if originalpath != newpath:
-            status = self.STATUS_CHANGED
+            status = Status.Changed
 
         return self.buildresult(status)
 
 
     def prependtopath(self, name, value):
         paths = self.getenvironment(name).split(';')
-        remove(paths, '')
+        self.removefrompath(paths, '')
         paths = self.getuniquepath(paths)
         self.removefrompath(paths, value)
         paths.insert(0, value)
@@ -62,7 +66,7 @@ class AddToPath(Module):
 
     def appendtopath(self, name, value):
         paths = self.getenvironment(name).split(';')
-        remove(paths, '')
+        self.removefrompath(paths, '')
         paths = self.getuniquepath(paths)
         self.removefrompath(paths, value)
         paths.append(value)
@@ -103,11 +107,15 @@ class AddToPath(Module):
     def getenvironmentkeys(self, user = True):
         if user:
             root = HKEY_CURRENT_USER
-            subkey = USERSUBKEY
+            subkey = self.USERSUBKEY
         else:
             root = HKEY_LOCAL_MACHINE
-            subkey = ROOTSUBKEY
+            subkey = self.ROOTSUBKEY
         return root, subkey
+
+
+    def convertdirectory(self, directory)
+        return directory.replace("/", "\\")
 
 
 

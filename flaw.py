@@ -138,7 +138,7 @@ def loadmodules():
         'replaceline': ReplaceLineInFile(),
         'mkdir': MakeDirectory(),
         'shortcut': CreateShortcut(),
-        'addpath': AddToPath(),
+        'pathenv': AddToPath(),
         'download': DownloadFromUrl(),
         'firefox': DownloadWithFirefox(),
         'checkadmin': CheckRunAsAdmin(),

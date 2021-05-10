@@ -37,22 +37,24 @@ class ReplaceLineInFile(Module):
         elif mode.lower() == "prepend":
             substitute = f"{substitute}{marker}"
         elif mode.lower() != "replace":
-            return self.handelerror(Error.BadArgument, f"The mode '{mode}' it not recognized as a valid mode for this command, it should be 'replace', 'append', or 'prepend'.")
+            return self.handleerror(Error.BadArgument, f"The mode '{mode}' it not recognized as a valid mode for this command, it should be 'replace', 'append', or 'prepend'.")
 
         if not exists(sourcepath) or not isfile(sourcepath):
-            return self.handelerror(Error.MissingFile, f"The file {sourcepath} does not exist, so it cannot be modified.")
+            return self.handleerror(Error.MissingFile, f"The file {sourcepath} does not exist, so it cannot be modified.")
 
         sourcehandle = open(sourcepath, "r")
-        lines = sourcehandle.readlines()
+        sourcelines = sourcehandle.readlines()
         sourcehandle.close()
         
-        for line in inputlines:
+        targetlines = []
+        for line in sourcelines:
             if marker in line:
                 line = line.replace(marker, substitute)
                 status = Status.Changed
+            targetlines.append(line)
 
         targethandle = open(targetpath, "w")
-        targethandle.writelines(lines)
+        targethandle.writelines(targetlines)
         targethandle.close()
 
         return self.buildresult(status)
