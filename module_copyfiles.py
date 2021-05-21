@@ -1,7 +1,7 @@
 
 from os import remove, scandir
 from os.path import exists, isdir, isfile, join
-from shutil import copy
+from shutil import copy, move
 from glob import glob
 
 from flaw_library import createdirectory
@@ -20,6 +20,7 @@ class CopyFiles(Module):
                 Parameter('targetdir', required = True),
                 Parameter('filename', required = False),
                 Parameter('targetname', required = False),
+                Parameter('mode', required = False),
                 Parameter('overwrite', required = False),
                 Parameter('recursive', required = False)
             ])
@@ -30,6 +31,7 @@ class CopyFiles(Module):
         targetdirectory = arguments['targetdir']
         filename = arguments.get('filename', "*.*")
         newfilename = arguments.get('targetname', filename)
+        mode = arguments.get('mode', 'copy')
         overwrite = arguments.get('overwrite', False)
         recursive = arguments.get('recursive', False)
 
@@ -40,16 +42,16 @@ class CopyFiles(Module):
         filenames = glob(sourcepath)
         
         if recursive:
-            return self.copyrecursive(sourcedirectory, targetdirectory, filename, overwrite)
+            return self.copyrecursive(sourcedirectory, targetdirectory, filename, mode, overwrite)
         elif len(filenames) == 0:
             return self.handleerror(Error.MissingFile, f"Failed to copy the file(s) {filename} from the directory {sourcedirectory}, because the files do not exist.")
         elif len(filenames) == 1:
-            return self.copysingle(sourcedirectory, targetdirectory, filenames[0], newfilename, overwrite)
+            return self.copysingle(sourcedirectory, targetdirectory, filenames[0], newfilename, mode, overwrite)
         else:
-            return self.copymultiple(sourcedirectory, targetdirectory, filenames, overwrite)
+            return self.copymultiple(sourcedirectory, targetdirectory, filenames, mode, overwrite)
 
 
-    def copyrecursive(self, sourcedirectory, targetdirectory, filename, overwrite):
+    def copyrecursive(self, sourcedirectory, targetdirectory, filename, mode, overwrite):
         subdirectories = [ file.name for file in os.scandir(sourcedirectory) if file.is_dir() ]
         sourcepath = join(sourcedirectory, filename)
         filenames = glob(sourcepath)
@@ -66,21 +68,21 @@ class CopyFiles(Module):
             if not exists(targetsubdirectory):
                 return self.handeerror(Error.FailedMakeDirectory, f"Failed to create the target directory {targetsubdirectory} for recursive file copy.")
 
-            result = self.copyrecursive(sourcesubdirectory, targetsubdirectory, filename, overwrite)
+            result = self.copyrecursive(sourcesubdirectory, targetsubdirectory, filename, mode, overwrite)
             if result.status == Status.Error:
                 return result
             elif result.status == Status.Changed:
                 status = Status.Changed
     
-        result = self.copymultiple(sourcedirectory, targetdirectory, filenames, overwrite)
+        result = self.copymultiple(sourcedirectory, targetdirectory, filenames, mode, overwrite)
         return result if result.status != Status.OK else self.buildresult(status)
     
 
-    def copymultiple(self, sourcedirectory, targetdirectory, filenames, overwrite):
+    def copymultiple(self, sourcedirectory, targetdirectory, filenames, mode, overwrite):
         status = Status.OK
     
         for filename in filenames:
-            result = self.copysingle(sourcedirectory, targetdirectory, filename, filename, overwrite)
+            result = self.copysingle(sourcedirectory, targetdirectory, filename, filename, mode, overwrite)
             if result.status == Status.Error:
                 return result
             elif result.status == Status.Changed:
@@ -89,7 +91,7 @@ class CopyFiles(Module):
         return self.buildresult(status)
 
 
-    def copysingle(self, sourcedirectory, targetdirectory, filename, newfilename, overwrite):
+    def copysingle(self, sourcedirectory, targetdirectory, filename, newfilename, mode, overwrite):
         sourcepath = join(sourcedirectory, filename)
         targetpath = join(targetdirectory, newfilename)
         status = Status.OK
@@ -108,7 +110,12 @@ class CopyFiles(Module):
             status = Status.Changed
         
         if not exists(targetpath):
-            copy(sourcepath, targetpath)
+            if mode == 'copy':
+                copy(sourcepath, targetpath)
+            elif mode == 'move':
+                move(sourcepath, targetpath)
+            else:
+                self.handleerror(Error.BadArgument, f"The mode {mode} is not supported by this module.")
             status = Status.Changed
 
         if not exists(targetpath) or not isfile(targetpath):
