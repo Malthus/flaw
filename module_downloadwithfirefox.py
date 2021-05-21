@@ -39,7 +39,7 @@ class DownloadWithFirefox(Module):
         timeout = arguments.get('timeout', 30)
 
         if not exists(firefoxexecutable):
-            return self.handelerror(Error.MissingExecutable, f"The Firefox executable {firefoxexecutable} cannot be found.")
+            return self.handleerror(Error.MissingExecutable, f"The Firefox executable {firefoxexecutable} cannot be found.")
 
         # Add additional checks
 
@@ -58,7 +58,7 @@ class DownloadWithFirefox(Module):
         
         profiledirectory = self.findflawprofiledirectory(profilebasedirectory)
         if profiledirectory is None:
-            return self.handelerror(Error.MissingProfileDirectory, f"The profile directory {profiledirectory} could not be found, so the profile is probably not created.")
+            return self.handleerror(Error.MissingProfileDirectory, f"The profile directory {profiledirectory} could not be found, so the profile is probably not created.")
     
         downloaddirectory = directory.replace("/", "\\\\")
         lines = [
