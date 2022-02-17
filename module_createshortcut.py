@@ -3,7 +3,7 @@
 
 from pythoncom import CoCreateInstance, CLSCTX_INPROC_SERVER, IID_IPersistFile
 from win32com.shell import shell, shellcon
-from os.path import exists
+from os.path import exists, join
 
 from module import Parameter, Status, Module
 
@@ -19,23 +19,24 @@ class CreateShortcut(Module):
                 Parameter('command', required = True), 
                 Parameter('name', required = True), 
                 Parameter('targetdir', required = True), 
-                Parameter('icon', required = False)
+                Parameter('icon', required = False),
+                Parameter('runasadmin', required = False)
             ])
 
 
-    def createshortcut(self, parameters):
+    def createshortcut(self, arguments):
         command = arguments['command']
         name = arguments['name']
         targetdir = arguments['targetdir']
         shortcutpath = join(targetdir, f"{name}.lnk")
         icon = arguments.get('icon', None)
+        runasadmin = arguments.get('runasadmin', False)
         description = None
         directory = None
-        runasadmin = False
         status = Status.OK
 
         if not exists(shortcutpath):
-            self.createlink(path, command, icon, description, directory, runasadmin)
+            self.createlink(shortcutpath, command, icon, description, directory, runasadmin)
             status = Status.Changed
 
         return self.buildresult(status)
@@ -58,13 +59,6 @@ class CreateShortcut(Module):
             linkdata = shortcut.QueryInterface(shell.IID_IShellLinkDataList)
             linkdata.SetFlags(linkdata.GetFlags() | shellcon.SLDF_RUNAS_USER)
 
-        file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+        file = shortcut.QueryInterface(IID_IPersistFile)
         file.Save(shortcutpath, 0)
-
-#            shell = Dispatch("WScript.Shell")
-#            shortcut = shell.CreateShortCut(path)
-#            shortcut.Targetpath = command
-#            shortcut.IconLocation = icon
-#            shortcut.WindowStyle = 1
-#            shortcut.save()
 

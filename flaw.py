@@ -14,16 +14,17 @@ from module_copyfiles import CopyFiles
 from module_deletefiles import DeleteFiles
 from module_replacelineinfile import ReplaceLineInFile
 from module_makedirectory import MakeDirectory
+from module_renamefile import RenameFile
 from module_createshortcut import CreateShortcut
 from module_addtopath import AddToPath
 from module_downloadfromurl import DownloadFromUrl
-from module_downloadwithfirefox import DownloadWithFirefox
+from module_downloadwithfirefox import DownloadWithFirefo
+from module_downloadcertificate import DownloadCertificate
 from module_checkrunasadmin import CheckRunAsAdmin
 from module_keyboardinput import KeyboardInput
 from module_showinformation import ShowInformation
 
 #from module_installmsi import InstallMSI
-#from module_deletefile import DeleteFile
 #from module_runprogram import RunProgram
 
 
@@ -69,8 +70,11 @@ class Player(object):
                     parameters = task[modulekey]
                     module = modules[modulekey]
                     result = module.execute(parameters)
+                    
+                    if result.status == Status.Error:
+                        breakonerror(f"     Playbook terminated on error {result.returncode}: {result.message}.")
                 except Exception as exception:
-                    breakonerror(f"     Error: {exception.message}.")
+                    breakonerror(f"     Error: {exception}.")
             else:
                 breakonerror(f"     No module found for {task['name']}.")
         else:
@@ -105,11 +109,15 @@ class Player(object):
 
 
     def replaceinstring(self, originalvalue, variables):
-        startindex = originalvalue.find("{{") + 2
-        endindex = originalvalue.find("}}", startindex)
-        variable = originalvalue[startindex:endindex].strip()
-        value = variables if variable == '*' else variables[variable]
-        newvalue = originalvalue[:startindex - 2] + value + originalvalue[endindex + 2:]
+        newvalue = originalvalue
+        index = newvalue.find("{{")
+        while index >= 0:
+            startindex = index + 2
+            endindex = newvalue.find("}}", startindex)
+            variable = newvalue[startindex:endindex].strip()
+            value = variables if variable == '*' else variables[variable]
+            newvalue = newvalue[:startindex - 2] + value + newvalue[endindex + 2:]
+            index = newvalue.find("{{", index + 2)
         return newvalue
 
 
@@ -133,14 +141,16 @@ def parsecommandline(arguments):
 def loadmodules():
     return {
         'command': ExecuteCommand(),
-        'copyfile': CopyFiles(),
-        'deletefile': DeleteFiles(),
-        'replaceline': ReplaceLineInFile(),
+        'copyfiles': CopyFiles(),
+        'deletefiles': DeleteFiles(),
         'mkdir': MakeDirectory(),
+        'renamefile': RenameFile(),
+        'replaceline': ReplaceLineInFile(),
         'shortcut': CreateShortcut(),
-        'pathenv': AddToPath(),
+        'addpath': AddToPath(),
         'download': DownloadFromUrl(),
         'firefox': DownloadWithFirefox(),
+        'certificate': DownloadCertificate(),
 #        'install': InstallMSI(),
 #        'program': RunProgram(),
 
@@ -172,10 +182,6 @@ modules = loadmodules()
 playbookfile = parsecommandline(sys.argv)
 if playbookfile is None:
     breakonerror("A playbookfile is missing from the command line.")
-
-# Check administrator role
-#if not checkadministratorrole():
-#    breakonerror("Flaw needs to run with administrator-privileges")
 
 # Read yaml file
 print(f"\nReading playbook from file {playbookfile}.")

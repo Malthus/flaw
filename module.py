@@ -39,6 +39,7 @@ class Error(IntEnum):
     FailedCopyFile = 71,
     FailedMakeDirectory = 72
     FailedDownloadFile = 73,
+    FailedDownloadCertificate = 74
     
 
 class Result(object):

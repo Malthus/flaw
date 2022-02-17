@@ -21,5 +21,5 @@ class CheckRunAsAdmin(Module):
         if checkadministratorrole() == runasadmin:
             return self.buildresult(Status.OK)
         else:
-            return self.handleerror(Error.FailedCondition, f"Failed the expectation to {'DO' if runasadmin else 'NOT'} run as admin.")
+            return self.handleerror(Error.FailedCondition, f"Failed the expectation to {'RUN' if runasadmin else 'NOT RUN'} as admin.")
 
